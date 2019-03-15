@@ -11,7 +11,14 @@
   },
   "extra": {
     "oxideshop": {
-      "target-directory": "oxps/modulesconfig"
+      "target-directory": "oxps/modulesconfig",
+      "blacklist-filter": [
+                "Core/**/*",
+                "Command/**/*",
+                "Controller/**/*",
+                "Model/**/*",
+                ".*"
+      ]
     }
   },
   "autoload": {
