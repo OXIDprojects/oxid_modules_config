@@ -246,12 +246,12 @@ class ConfigExport extends CommandBase
                             unset($aModuleConfig[$sVarName]);
                         }
                     }
-                    foreach ($aModuleConfig as $aConfigKey => $Value) {
-                        if (!isset($known[$aConfigKey])) {
+                    foreach ($aModuleConfig as $sConfigKey => $sValue) {
+                        if (!isset($known[$sConfigKey])) {
                             $this->output->writeLn(
-                                "$sVarName from module $sModuleId is ignored because it is not defined in metadata.php anymore"
+                                "$sConfigKey from module $sModuleId is ignored because it is not defined in metadata.php anymore"
                             );
-                            unset($aModuleConfig[$aConfigKey]);
+                            unset($aModuleConfig[$sConfigKey]);
                         }
                     }
                     if (count($aModuleConfig) == 0) {
