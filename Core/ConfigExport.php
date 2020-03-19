@@ -118,6 +118,11 @@ class ConfigExport extends CommandBase
     protected function filternestedExcludes($values){
         $excludeDeep = $this->aConfiguration['excludeDeep'];
         $moduleValues = &$values['module'];
+
+        if ($moduleValues === null) {
+            return $values;
+        }
+
         foreach ($moduleValues as $moduleId => &$moduleSettings) {
             foreach ($moduleSettings as $sVarName => &$aVarValue) {
                 if (is_array($aVarValue)) {
@@ -210,10 +215,8 @@ class ConfigExport extends CommandBase
                     $aDefaultModuleSettings = is_null($oModule->getInfo("settings")) ? array() : $oModule->getInfo(
                         "settings"
                     );
-                    $known = [];
                     foreach ($aDefaultModuleSettings as $aConfigValue) {
                         $sVarName = $aConfigValue['name'];
-                        $known[$sVarName] = 1;
                         if (array_key_exists($sVarName, $aGeneralConfig)) {
                             //if a module safe a value twice once in module namespace and once in general namespace only export the value from the
                             //modulename space because it this happens only when the config table has some corrupted data
@@ -227,7 +230,11 @@ class ConfigExport extends CommandBase
 
 
                         if ($sDefaultType == 'bool') {
-                            $mDefaultValue = $this->convertToBool($mDefaultValue);
+                            if ($mDefaultValue === 'false') {
+                                $mDefaultValue = '';
+                            } else {
+                                $mDefaultValue = $mDefaultValue ? '1' : '';
+                            }
                         }
 
                         if (! isset($aModuleConfig[$sVarName])) {
@@ -238,27 +245,18 @@ class ConfigExport extends CommandBase
                             $mCurrentValue = $aModuleConfig[$sVarName];
                         }
 
-                        if ($sDefaultType == 'bool') {
-                            $mCurrentValue = $this->convertToBool($mCurrentValue);
-                        }
-
                         if ($mCurrentValue === $mDefaultValue) {
                             unset($aModuleConfig[$sVarName]);
+                            if (count($aModuleConfig) == 0) {
+                                unset($aModuleConfigs[$sModuleId]);
+                            }
                         }
-                    }
-                    foreach ($aModuleConfig as $aConfigKey => $Value) {
-                        if (!isset($known[$aConfigKey])) {
-                            $this->output->writeLn(
-                                "$sVarName from module $sModuleId is ignored because it is not defined in metadata.php anymore"
-                            );
-                            unset($aModuleConfig[$aConfigKey]);
-                        }
-                    }
-                    if (count($aModuleConfig) == 0) {
-                        unset($aModuleConfigs[$sModuleId]);
                     }
                 }
+            } else {
+                $aShopConfig['module'] = [];
             }
+
             $aDefaultGeneralConfig = $this->aDefaultConfig[$this->sNameForGeneralShopSettings];
             foreach ($aGeneralConfig as $sVarName => $mCurrentValue) {
                 $mDefaultValue = isset($aDefaultGeneralConfig[$sVarName]) ? $aDefaultGeneralConfig[$sVarName] : null;
@@ -567,7 +565,7 @@ class ConfigExport extends CommandBase
     public function getGlobalExcludedFields()
     {
         $aGlobalExcludeFields = array_merge(
-            //$this->_getImFields(),
+        //$this->_getImFields(),
             $this->_getDefaultExcludeFields(),
             $this->aConfiguration['excludeFields'], //Custom exclude fields
             $this->aConfiguration['envFields'],
@@ -656,19 +654,5 @@ class ConfigExport extends CommandBase
             if(!empty($sVarPos)) { $mVarValue['pos'] = $sVarPos; }
         }
         return $mVarValue;
-    }
-
-    /**
-     * @param $mDefaultValue
-     * @return string
-     */
-    protected function convertToBool($mDefaultValue)
-    {
-        if ($mDefaultValue === 'false') {
-            $mDefaultValue = false;
-        } else {
-            $mDefaultValue = $mDefaultValue ? true : false;
-        }
-        return $mDefaultValue;
     }
 }
