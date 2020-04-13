@@ -322,8 +322,10 @@ class ConfigImport extends CommandBase
                     //    "[NOTE] {$sModuleId} current version is $cv"
                     //);
                 }
-                $disabledModulesBeforeImport[$sModuleId] = 'disabledByUpdate';
-                $oModuleStateFixer->deactivate($oModule);
+                if($oModule->isActive()) {
+                    $disabledModulesBeforeImport[$sModuleId] = 'disabledByUpdate';
+                    $oModuleStateFixer->deactivate($oModule);
+                }
             }
         }
 
