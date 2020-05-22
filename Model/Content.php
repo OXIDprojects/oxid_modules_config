@@ -57,7 +57,7 @@ class Content extends \oxSuperCfg
     public function getModulesList()
     {
         /** @var \oxModuleList $oModuleList */
-        $oModuleList = oxNew('oxModuleList');
+        $oModuleList = oxNew(\OxidEsales\Eshop\Core\Module\ModuleList::class);
 
         // Get all modules data
         $aAllModules = $oModuleList->getModulesFromDir($this->getConfig()->getModulesDir());

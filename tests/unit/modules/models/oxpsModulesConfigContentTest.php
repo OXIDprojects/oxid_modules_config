@@ -47,39 +47,47 @@ class oxpsModulesConfigContentTest extends OxidTestCase
     public function setUp()
     {
         parent::setUp();
+        /**
+         *There is no need to mock here
+         * $this->SUT = $this->getMock(\OxidProfessionalServices\ModulesConfig\Model\Content::class);
+         */
+        $this->SUT = new \OxidProfessionalServices\ModulesConfig\Model\Content();
 
-        $this->SUT = $this->getMock('oxpsModulesConfigContent', array('__call'));
     }
 
 
     public function testGetModulesList()
     {
         // Config mock
-        $oConfig = $this->getMock('oxConfig', array('getModulesDir'));
+        $oConfig = $this->getMock(\OxidEsales\Eshop\Core\Config::class, array('getModulesDir'));
         $oConfig->expects($this->once())->method('getModulesDir')->will($this->returnValue('/shop/modules/'));
 
-        oxRegistry::set('oxConfig', $oConfig);
+        \OxidEsales\Eshop\Core\Registry::set(\OxidEsales\Eshop\Core\Config::class, $oConfig);
 
         // Modules list mock
-        $oModuleList = $this->getMock('oxModuleList', array('__call', 'getModulesFromDir'));
+        $oModuleList = $this->getMock(\OxidEsales\Eshop\Core\Module\ModuleList::class, array('getModulesFromDir'));
         $oModuleList->expects($this->once())->method('getModulesFromDir')->with('/shop/modules/')->will(
             $this->returnValue(
                 array(
-                    'my_module'         => (object) array('version' => '1.0.0'),
-                    'oxpsmodulesconfig' => (object) array('version' => '0.1.0'),
-                    'good_extension'    => (object) array('version' => '0.2.5'),
+                    'my_module' => (object)array('version' => '1.0.0'),
+                    'oxpsmodulesconfig' => (object)array('version' => '0.1.0'),
+                    'good_extension' => (object)array('version' => '0.2.5'),
                 )
             )
         );
+        // Deprecated: oxTestModules::addModuleObject('oxModuleList', $oModuleList); Use the following two lines instead.
+        \OxidEsales\Eshop\Core\Registry::set(\OxidEsales\Eshop\Core\Module\ModuleList::class, $oModuleList);
+        $utils = \OxidEsales\Eshop\Core\UtilsObject::getInstance();
+        $utils->setClassInstance(\OxidEsales\Eshop\Core\Module\ModuleList::class, $oModuleList);
+        $aModules = $this->SUT->getModulesList();
 
-        oxTestModules::addModuleObject('oxModuleList', $oModuleList);
 
         $this->assertEquals(
             array(
                 'my_module'      => (object) array('version' => '1.0.0'),
                 'good_extension' => (object) array('version' => '0.2.5'),
             ),
-            $this->SUT->getModulesList()
+            $aModules
         );
     }
 

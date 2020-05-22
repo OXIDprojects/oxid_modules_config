@@ -47,8 +47,8 @@ class oxpsModulesConfigJsonValidatorTest extends OxidTestCase
     public function setUp()
     {
         parent::setUp();
-
-        $this->SUT = $this->getMock('oxpsModulesConfigJsonValidator', array('__call'));
+        // No need to mock the SUT
+        $this->SUT = new \OxidProfessionalServices\ModulesConfig\Core\JsonValidator();
     }
 
     /**
