@@ -48,11 +48,11 @@ class oxpsModulesConfigRequestValidatorTest extends OxidTestCase
     {
         parent::setUp();
 
-        $this->SUT = $this->getMock('oxpsModulesConfigRequestValidator', array('__call', '_isReadableFile'));
+        $this->SUT = $this->getMock(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, array('_isReadableFile'));
         $this->SUT->expects($this->any())->method('_isReadableFile')->will($this->returnValue(true));
 
         // Content model mock
-        $oContent = $this->getMock('oxpsModulesConfigContent', array('__call', 'getModulesList', 'getSettingsList'));
+        $oContent = $this->getMock(\OxidProfessionalServices\ModulesConfig\Model\Content::class, array('getModulesList', 'getSettingsList'));
         $oContent->expects($this->any())->method('getModulesList')->will(
             $this->returnValue(
                 array(
@@ -70,7 +70,7 @@ class oxpsModulesConfigRequestValidatorTest extends OxidTestCase
             )
         );
 
-        oxRegistry::set('oxpsModulesConfigContent', $oContent);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Model\Content::class, $oContent);
     }
 
 
@@ -210,13 +210,13 @@ class oxpsModulesConfigRequestValidatorTest extends OxidTestCase
     {
         // Modules configuration export, backup and import actions handler mock
         $oTransfer = $this->getMock(
-            'oxpsModulesConfigTransfer',
-            array('__call', 'setImportDataFromFile', 'getImportDataValidationErrors')
+            \OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class,
+            array('setImportDataFromFile', 'getImportDataValidationErrors')
         );
         $oTransfer->expects($this->never())->method('setImportDataFromFile');
         $oTransfer->expects($this->never())->method('getImportDataValidationErrors');
 
-        oxTestModules::addModuleObject('oxpsModulesConfigTransfer', $oTransfer);
+        oxTestModules::addModuleObject(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, $oTransfer);
 
         $this->assertSame($blReturn, $this->SUT->validateImportData($aData));
 
@@ -278,15 +278,15 @@ class oxpsModulesConfigRequestValidatorTest extends OxidTestCase
 
         // Modules configuration export, backup and import actions handler mock
         $oTransfer = $this->getMock(
-            'oxpsModulesConfigTransfer',
-            array('__call', 'setImportDataFromFile', 'getImportDataValidationErrors')
+            \OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class,
+            array('setImportDataFromFile', 'getImportDataValidationErrors')
         );
         $oTransfer->expects($this->once())->method('setImportDataFromFile')->with($aFileData);
         $oTransfer->expects($this->once())->method('getImportDataValidationErrors')->will(
             $this->returnValue(array('ERR_1', 'ERR_2'))
         );
 
-        oxTestModules::addModuleObject('oxpsModulesConfigTransfer', $oTransfer);
+        oxTestModules::addModuleObject(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, $oTransfer);
 
         $this->assertFalse($this->SUT->validateImportData($aFileData));
         $this->assertSame(array('ERR_1', 'ERR_2'), $this->SUT->getErrors());
@@ -302,15 +302,15 @@ class oxpsModulesConfigRequestValidatorTest extends OxidTestCase
 
         // Modules configuration export, backup and import actions handler mock
         $oTransfer = $this->getMock(
-            'oxpsModulesConfigTransfer',
-            array('__call', 'setImportDataFromFile', 'getImportDataValidationErrors')
+            \OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class,
+            array('setImportDataFromFile', 'getImportDataValidationErrors')
         );
         $oTransfer->expects($this->once())->method('setImportDataFromFile')->with($aFileData);
         $oTransfer->expects($this->once())->method('getImportDataValidationErrors')->will(
             $this->returnValue(array())
         );
 
-        oxTestModules::addModuleObject('oxpsModulesConfigTransfer', $oTransfer);
+        oxTestModules::addModuleObject(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, $oTransfer);
 
         $this->assertTrue($this->SUT->validateImportData($aFileData));
         $this->assertSame(array(), $this->SUT->getErrors());

@@ -47,15 +47,15 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
     public function setUp()
     {
         parent::setUp();
-
-        $this->SUT = $this->getMock('Admin_oxpsModulesConfigDashboard', array('__construct', '__call'));
+        // No need to mock the SUT.
+        $this->SUT = new \OxidProfessionalServices\ModulesConfig\Controller\Admin\Dashboard();
     }
 
 
     public function testGetModulesList()
     {
         // Content model mock
-        $oContent = $this->getMock('oxpsModulesConfigContent', array('__call', 'getModulesList'));
+        $oContent = $this->getMock(\OxidProfessionalServices\ModulesConfig\Model\Content::class, array( 'getModulesList'));
         $oContent->expects($this->once())->method('getModulesList')->will(
             $this->returnValue(
                 array(
@@ -65,7 +65,7 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             )
         );
 
-        oxRegistry::set('oxpsModulesConfigContent', $oContent);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Model\Content::class, $oContent);
 
         $this->assertEquals(
             array(
@@ -80,7 +80,7 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
     public function testGetSettingsList()
     {
         // Content model mock
-        $oContent = $this->getMock('oxpsModulesConfigContent', array('__call', 'getSettingsList'));
+        $oContent = $this->getMock(\OxidProfessionalServices\ModulesConfig\Model\Content::class, array( 'getSettingsList'));
         $oContent->expects($this->once())->method('getSettingsList')->will(
             $this->returnValue(
                 array(
@@ -90,7 +90,7 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             )
         );
 
-        oxRegistry::set('oxpsModulesConfigContent', $oContent);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Model\Content::class, $oContent);
 
         $this->assertSame(
             array(
@@ -131,9 +131,9 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
     public function testGetValidator()
     {
         // Request validator instance mock
-        $oValidator = $this->getMock('oxpsModulesConfigRequestValidator', array('__call'));
+        $oValidator = $this->getMock(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class);
 
-        oxRegistry::set('oxpsModulesConfigRequestValidator', $oValidator);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, $oValidator);
 
         $this->assertSame($oValidator, $this->SUT->getValidator());
     }
@@ -142,10 +142,10 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
     public function testGetErrors()
     {
         // Request validator instance mock
-        $oValidator = $this->getMock('oxpsModulesConfigRequestValidator', array('__call', 'getErrors'));
+        $oValidator = $this->getMock(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, array( 'getErrors'));
         $oValidator->expects($this->once())->method('getErrors')->will($this->returnValue(array('ERR_A', 'OTHER_ERR')));
 
-        oxRegistry::set('oxpsModulesConfigRequestValidator', $oValidator);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, $oValidator);
 
         $this->assertSame(array('ERR_A', 'OTHER_ERR'), $this->SUT->getErrors());
     }
@@ -154,12 +154,12 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
     public function testActionSubmit_invalidRequestData()
     {
         // Request validator instance mock
-        $oValidator = $this->getMock('oxpsModulesConfigRequestValidator', array('__call', 'validateRequestData'));
+        $oValidator = $this->getMock(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, array( 'validateRequestData'));
         $oValidator->expects($this->once())->method('validateRequestData')
             ->with(array('modules' => array(), 'settings' => array(), 'action' => ''))
             ->will($this->returnValue(false));
 
-        oxRegistry::set('oxpsModulesConfigRequestValidator', $oValidator);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, $oValidator);
 
         $this->SUT->actionSubmit();
         $this->assertSame(array(), $this->SUT->getMessages());
@@ -167,14 +167,21 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
 
     public function testActionSubmit_validExportRequest_callExportAndDownloadHandler()
     {
+        /*
         modConfig::setRequestParameter('oxpsmodulesconfig_modules', array('my_module'));
         modConfig::setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
         modConfig::setRequestParameter('oxpsmodulesconfig_export', 1);
+        */
+        $this->setRequestParameter('oxpsmodulesconfig_modules', array('my_module'));
+        $this->setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
+        $this->setRequestParameter('oxpsmodulesconfig_export', 1);
+
+
 
         // Request validator instance mock
         $oValidator = $this->getMock(
-            'oxpsModulesConfigRequestValidator',
-            array('__call', 'validateRequestData', 'addError')
+            \OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class,
+            array( 'validateRequestData', 'addError')
         );
         $oValidator->expects($this->once())->method('validateRequestData')
             ->with(
@@ -185,10 +192,10 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
         // Anyway this is called inside test (because download is mocked)
         $oValidator->expects($this->once())->method('addError')->with('OXPS_MODULESCONFIG_ERR_EXPORT_FAILED');
 
-        oxRegistry::set('oxpsModulesConfigRequestValidator', $oValidator);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, $oValidator);
 
         // Configuration data transfer handler mock
-        $oConfigTransfer = $this->getMock('oxpsModulesConfigTransfer', array('__call', 'exportForDownload'));
+        $oConfigTransfer = $this->getMock(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, array( 'exportForDownload'));
         $oConfigTransfer->expects($this->once())->method('exportForDownload')->with(
             array(
                 'modules'  => array('my_module'),
@@ -197,7 +204,7 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             )
         );
 
-        oxTestModules::addModuleObject('oxpsModulesConfigTransfer', $oConfigTransfer);
+        oxTestModules::addModuleObject(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, $oConfigTransfer);
 
         $this->SUT->actionSubmit();
         $this->assertSame('export', $this->SUT->getAction());
@@ -206,14 +213,19 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
 
     public function testActionSubmit_backupFailedToSaveFile_setBackupError()
     {
+        /**
         modConfig::setRequestParameter('oxpsmodulesconfig_modules', array('my_module', 'good_extension'));
         modConfig::setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
         modConfig::setRequestParameter('oxpsmodulesconfig_backup', 1);
+         */
+        $this->setRequestParameter('oxpsmodulesconfig_modules', array('my_module', 'good_extension'));
+        $this->setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
+        $this->setRequestParameter('oxpsmodulesconfig_backup', 1);
 
         // Request validator instance mock
         $oValidator = $this->getMock(
-            'oxpsModulesConfigRequestValidator',
-            array('__call', 'validateRequestData', 'addError')
+            \OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class,
+            array( 'validateRequestData', 'addError')
         );
         $oValidator->expects($this->once())->method('validateRequestData')
             ->with(
@@ -226,10 +238,10 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             ->will($this->returnValue(true));
         $oValidator->expects($this->once())->method('addError')->with('OXPS_MODULESCONFIG_ERR_BACKUP_FAILED');
 
-        oxRegistry::set('oxpsModulesConfigRequestValidator', $oValidator);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, $oValidator);
 
         // Configuration data transfer handler mock
-        $oConfigTransfer = $this->getMock('oxpsModulesConfigTransfer', array('__call', 'backupToFile'));
+        $oConfigTransfer = $this->getMock(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, array( 'backupToFile'));
         $oConfigTransfer->expects($this->once())->method('backupToFile')->with(
             array(
                 'modules'  => array('my_module', 'good_extension'),
@@ -239,7 +251,7 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             ''
         )->will($this->returnValue(0));
 
-        oxTestModules::addModuleObject('oxpsModulesConfigTransfer', $oConfigTransfer);
+        oxTestModules::addModuleObject(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, $oConfigTransfer);
 
         $this->SUT->actionSubmit();
         $this->assertSame('backup', $this->SUT->getAction());
@@ -248,14 +260,19 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
 
     public function testActionSubmit_validBackupRequest_callExportAndSaveToFileHandler()
     {
+        /**
         modConfig::setRequestParameter('oxpsmodulesconfig_modules', array('my_module', 'good_extension'));
         modConfig::setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
         modConfig::setRequestParameter('oxpsmodulesconfig_backup', 1);
+         */
+        $this->setRequestParameter('oxpsmodulesconfig_modules', array('my_module', 'good_extension'));
+        $this->setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
+        $this->setRequestParameter('oxpsmodulesconfig_backup', 1);
 
         // Request validator instance mock
         $oValidator = $this->getMock(
-            'oxpsModulesConfigRequestValidator',
-            array('__call', 'validateRequestData', 'addError')
+            \OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class,
+            array( 'validateRequestData', 'addError')
         );
         $oValidator->expects($this->once())->method('validateRequestData')
             ->with(
@@ -268,10 +285,10 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             ->will($this->returnValue(true));
         $oValidator->expects($this->never())->method('addError');
 
-        oxRegistry::set('oxpsModulesConfigRequestValidator', $oValidator);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, $oValidator);
 
         // Configuration data transfer handler mock
-        $oConfigTransfer = $this->getMock('oxpsModulesConfigTransfer', array('__call', 'backupToFile'));
+        $oConfigTransfer = $this->getMock(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, array( 'backupToFile'));
         $oConfigTransfer->expects($this->once())->method('backupToFile')->with(
             array(
                 'modules'  => array('my_module', 'good_extension'),
@@ -281,7 +298,7 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             ''
         )->will($this->returnValue(888));
 
-        oxTestModules::addModuleObject('oxpsModulesConfigTransfer', $oConfigTransfer);
+        oxTestModules::addModuleObject(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, $oConfigTransfer);
 
         $this->SUT->actionSubmit();
         $this->assertSame('backup', $this->SUT->getAction());
@@ -291,21 +308,27 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
     public function testActionSubmit_importDataInvalid_returnFalse()
     {
         // Config mock
-        $oConfig = $this->getMock('oxConfig', array('getUploadedFile'));
+        $oConfig = $this->getMock(\OxidEsales\Eshop\Core\Config::class, array('getUploadedFile'));
         $oConfig->expects($this->once())->method('getUploadedFile')->with('oxpsmodulesconfig_file')->will(
             $this->returnValue(array())
         );
 
-        oxRegistry::set('oxConfig', $oConfig);
+        \OxidEsales\Eshop\Core\Registry::set(\OxidEsales\Eshop\Core\Config::class, $oConfig);
+        \OxidEsales\Eshop\Core\UtilsObject::setClassInstance(\OxidEsales\Eshop\Core\Config::class, $oConfig);
 
+        /**
         modConfig::setRequestParameter('oxpsmodulesconfig_modules', array('my_module'));
         modConfig::setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
         modConfig::setRequestParameter('oxpsmodulesconfig_import', 1);
+         */
+        $this->setRequestParameter('oxpsmodulesconfig_modules', array('my_module'));
+        $this->setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
+        $this->setRequestParameter('oxpsmodulesconfig_import', 1);
 
         // Request validator instance mock
         $oValidator = $this->getMock(
-            'oxpsModulesConfigRequestValidator',
-            array('__call', 'validateRequestData', 'validateImportData')
+            \OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class,
+            array( 'validateRequestData', 'validateImportData')
         );
         $oValidator->expects($this->once())->method('validateRequestData')
             ->with(
@@ -320,20 +343,21 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             $this->returnValue(false)
         );
 
-        oxRegistry::set('oxpsModulesConfigRequestValidator', $oValidator);
+        \OxidEsales\Eshop\Core\Registry::set(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, $oValidator);
 
         // Configuration data transfer handler mock
         $oConfigTransfer = $this->getMock(
-            'oxpsModulesConfigTransfer',
-            array('__call', 'backupToFile', 'setImportDataFromFile', 'importData', 'getImportErrors')
+            \OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class,
+            array( 'backupToFile', 'setImportDataFromFile', 'importData', 'getImportErrors')
         );
         $oConfigTransfer->expects($this->never())->method('backupToFile');
         $oConfigTransfer->expects($this->never())->method('setImportDataFromFile');
         $oConfigTransfer->expects($this->never())->method('importData');
         $oConfigTransfer->expects($this->never())->method('getImportErrors');
 
-        oxTestModules::addModuleObject('oxpsModulesConfigTransfer', $oConfigTransfer);
-
+        oxTestModules::addModuleObject(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, $oConfigTransfer);
+        //todo: Lines #323 and #324 do not make SUT->getConfig() return $oConfig. So we have implemented the following hack.
+        $this->SUT->setConfig($oConfig);
         $this->SUT->actionSubmit();
         $this->assertSame('import', $this->SUT->getAction());
         $this->assertSame(array(), $this->SUT->getMessages());
@@ -355,14 +379,14 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
 
         oxRegistry::set('oxConfig', $oConfig);
 
-        modConfig::setRequestParameter('oxpsmodulesconfig_modules', array('my_module'));
-        modConfig::setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
-        modConfig::setRequestParameter('oxpsmodulesconfig_import', 1);
+        $this->setRequestParameter('oxpsmodulesconfig_modules', array('my_module'));
+        $this->setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
+        $this->setRequestParameter('oxpsmodulesconfig_import', 1);
 
         // Request validator instance mock
         $oValidator = $this->getMock(
-            'oxpsModulesConfigRequestValidator',
-            array('__call', 'validateRequestData', 'validateImportData', 'addErrors')
+            \OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class,
+            array( 'validateRequestData', 'validateImportData', 'addErrors')
         );
         $oValidator->expects($this->once())->method('validateRequestData')
             ->with(
@@ -386,12 +410,12 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             array('ERR_IMPORT_FAILURE_!', 'ERR-2')
         );
 
-        oxRegistry::set('oxpsModulesConfigRequestValidator', $oValidator);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, $oValidator);
 
         // Configuration data transfer handler mock
         $oConfigTransfer = $this->getMock(
-            'oxpsModulesConfigTransfer',
-            array('__call', 'backupToFile', 'setImportDataFromFile', 'importData', 'getImportErrors')
+            \OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class,
+            array( 'backupToFile', 'setImportDataFromFile', 'importData', 'getImportErrors')
         );
         $oConfigTransfer->expects($this->once())->method('backupToFile')
             ->with(
@@ -422,10 +446,10 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             $this->returnValue(array('ERR_IMPORT_FAILURE_!', 'ERR-2'))
         );
 
-        oxTestModules::addModuleObject('oxpsModulesConfigTransfer', $oConfigTransfer);
+        oxTestModules::addModuleObject(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, $oConfigTransfer);
 
         // Content model mock
-        $oContent = $this->getMock('oxpsModulesConfigContent', array('__call', 'getModulesList', 'getSettingsList'));
+        $oContent = $this->getMock(\OxidProfessionalServices\ModulesConfig\Model\Content::class, array( 'getModulesList', 'getSettingsList'));
         $oContent->expects($this->once())->method('getModulesList')->will(
             $this->returnValue(
                 array(
@@ -444,8 +468,10 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             )
         );
 
-        oxRegistry::set('oxpsModulesConfigContent', $oContent);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Model\Content::class, $oContent);
 
+        //todo: Line #380 does not make SUT->getConfig() return $oConfig so we fix this with the following hack for now:
+        $this->SUT->setConfig($oConfig);
         $this->SUT->actionSubmit();
         $this->assertSame('import', $this->SUT->getAction());
         $this->assertSame(array('OXPS_MODULESCONFIG_MSG_BACKUP_SUCCESS'), $this->SUT->getMessages());
@@ -467,14 +493,14 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
 
         oxRegistry::set('oxConfig', $oConfig);
 
-        modConfig::setRequestParameter('oxpsmodulesconfig_modules', array('my_module'));
-        modConfig::setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
-        modConfig::setRequestParameter('oxpsmodulesconfig_import', 1);
+        $this->setRequestParameter('oxpsmodulesconfig_modules', array('my_module'));
+        $this->setRequestParameter('oxpsmodulesconfig_settings', array('version' => 1, 'extend' => 1));
+        $this->setRequestParameter('oxpsmodulesconfig_import', 1);
 
         // Request validator instance mock
         $oValidator = $this->getMock(
-            'oxpsModulesConfigRequestValidator',
-            array('__call', 'validateRequestData', 'validateImportData', 'addErrors')
+            \OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class,
+            array( 'validateRequestData', 'validateImportData', 'addErrors')
         );
         $oValidator->expects($this->once())->method('validateRequestData')
             ->with(
@@ -496,12 +522,12 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             ->will($this->returnValue(true));
         $oValidator->expects($this->never())->method('addErrors');
 
-        oxRegistry::set('oxpsModulesConfigRequestValidator', $oValidator);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Core\RequestValidator::class, $oValidator);
 
         // Configuration data transfer handler mock
         $oConfigTransfer = $this->getMock(
-            'oxpsModulesConfigTransfer',
-            array('__call', 'backupToFile', 'setImportDataFromFile', 'importData', 'getImportErrors')
+            \OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class,
+            array( 'backupToFile', 'setImportDataFromFile', 'importData', 'getImportErrors')
         );
         $oConfigTransfer->expects($this->once())->method('backupToFile')
             ->with(
@@ -530,10 +556,10 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             ->will($this->returnValue(true));
         $oConfigTransfer->expects($this->never())->method('getImportErrors');
 
-        oxTestModules::addModuleObject('oxpsModulesConfigTransfer', $oConfigTransfer);
+        oxTestModules::addModuleObject(\OxidProfessionalServices\ModulesConfig\Core\ConfigTransfer::class, $oConfigTransfer);
 
         // Content model mock
-        $oContent = $this->getMock('oxpsModulesConfigContent', array('__call', 'getModulesList', 'getSettingsList'));
+        $oContent = $this->getMock(\OxidProfessionalServices\ModulesConfig\Model\Content::class, array( 'getModulesList', 'getSettingsList'));
         $oContent->expects($this->once())->method('getModulesList')->will(
             $this->returnValue(
                 array(
@@ -552,14 +578,15 @@ class Admin_oxpsModulesConfigDashboardTest extends OxidTestCase
             )
         );
 
-        oxRegistry::set('oxpsModulesConfigContent', $oContent);
+        oxRegistry::set(\OxidProfessionalServices\ModulesConfig\Model\Content::class, $oContent);
 
         // Module instance mock
-        $oModule = $this->getMock('oxpsModulesConfigModule', array('__construct', '__call', 'clearTmp'));
+        $oModule = $this->getMock('oxpsModulesConfigModule', array('clearTmp'));
         //$oModule->expects($this->once())->method('clearTmp');
 
         oxTestModules::addModuleObject('oxpsModulesConfigModule', $oModule);
-
+        //todo: Line 494 does not make SUT->getConfig() return $oConfig so we fix this with the following hack for now:
+        $this->SUT->setConfig($oConfig);
         $this->SUT->actionSubmit();
         $this->assertSame('import', $this->SUT->getAction());
         $this->assertSame(

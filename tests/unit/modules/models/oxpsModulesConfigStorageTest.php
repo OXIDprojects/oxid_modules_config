@@ -49,9 +49,8 @@ class oxpsModulesConfigStorageTest extends OxidTestCase
         parent::setUp();
 
         $this->SUT = $this->getMock(
-            'oxpsModulesConfigStorage',
+            \OxidProfessionalServices\ModulesConfig\Model\Storage::class,
             array(
-                '__call',
                 'getShopConfVar',
                 '_loadListFromShopConfig',
                 '_loadFromBlocksTable',
