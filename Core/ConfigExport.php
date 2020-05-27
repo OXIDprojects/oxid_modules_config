@@ -118,6 +118,11 @@ class ConfigExport extends CommandBase
     protected function filternestedExcludes($values){
         $excludeDeep = $this->aConfiguration['excludeDeep'];
         $moduleValues = &$values['module'];
+        
+        if ($moduleValues === null) {
+            return $values;
+        }
+
         foreach ($moduleValues as $moduleId => &$moduleSettings) {
             foreach ($moduleSettings as $sVarName => &$aVarValue) {
                 if (is_array($aVarValue)) {
@@ -194,71 +199,73 @@ class ConfigExport extends CommandBase
         foreach ($aGroupedValues as $sShopId => &$aShopConfig) {
             $aGeneralConfig = &$aShopConfig[$this->sNameForGeneralShopSettings];
 
-            if (isset($aShopConfig['module'])) {
-                $aModuleConfigs = &$aShopConfig['module'];
+            if (!isset($aShopConfig['module'])) {
+              $aShopConfig['module'] = [];
+            }
+            $aModuleConfigs = &$aShopConfig['module'];
 
-                /** @var \oxModule $oModule */
-                $oModule = oxNew('oxModule');
+            /** @var \oxModule $oModule */
+            $oModule = oxNew('oxModule');
 
-                foreach ($aModuleConfigs as $sModuleId => &$aModuleConfig) {
+            foreach ($aModuleConfigs as $sModuleId => &$aModuleConfig) {
 
-                    if (!$oModule->load($sModuleId)) {
-                        $this->handleModuleOnError($sModuleId);
-                        unset ($aModuleConfigs[$sModuleId]);
-                        continue;
+                if (!$oModule->load($sModuleId)) {
+                    $this->handleModuleOnError($sModuleId);
+                    unset ($aModuleConfigs[$sModuleId]);
+                    continue;
+                }
+                $aDefaultModuleSettings = is_null($oModule->getInfo("settings")) ? array() : $oModule->getInfo(
+                    "settings"
+                );
+                $known = [];
+                foreach ($aDefaultModuleSettings as $aConfigValue) {
+                    $sVarName = $aConfigValue['name'];
+                    $known[$sVarName] = 1;
+                    if (array_key_exists($sVarName, $aGeneralConfig)) {
+                        //if a module safe a value twice once in module namespace and once in general namespace only export the value from the
+                        //modulename space because it this happens only when the config table has some corrupted data
+                        $this->output->writeLn(
+                            "$sVarName from module $sModuleId is also configured in global namespace in shop $sShopId"
+                        );
+                        unset($aGeneralConfig[$sVarName]);
                     }
-                    $aDefaultModuleSettings = is_null($oModule->getInfo("settings")) ? array() : $oModule->getInfo(
-                        "settings"
-                    );
-                    $known = [];
-                    foreach ($aDefaultModuleSettings as $aConfigValue) {
-                        $sVarName = $aConfigValue['name'];
-                        $known[$sVarName] = 1;
-                        if (array_key_exists($sVarName, $aGeneralConfig)) {
-                            //if a module safe a value twice once in module namespace and once in general namespace only export the value from the
-                            //modulename space because it this happens only when the config table has some corrupted data
-                            $this->output->writeLn(
-                                "$sVarName from module $sModuleId is also configured in global namespace in shop $sShopId"
-                            );
-                            unset($aGeneralConfig[$sVarName]);
-                        }
-                        $sDefaultType  = $aConfigValue['type'];
-                        $mDefaultValue = $aConfigValue['value'];
+                    $sDefaultType  = $aConfigValue['type'];
+                    $mDefaultValue = $aConfigValue['value'];
 
 
-                        if ($sDefaultType == 'bool') {
-                            $mDefaultValue = $this->convertToBool($mDefaultValue);
-                        }
-
-                        if (! isset($aModuleConfig[$sVarName])) {
-                            //TODO warning about not set module config value
-                            //this happens if the module was installed fresh and config was never saved in admin
-                            $mCurrentValue = $mDefaultValue;
-                        } else {
-                            $mCurrentValue = $aModuleConfig[$sVarName];
-                        }
-
-                        if ($sDefaultType == 'bool') {
-                            $mCurrentValue = $this->convertToBool($mCurrentValue);
-                        }
-
-                        if ($mCurrentValue === $mDefaultValue) {
-                            unset($aModuleConfig[$sVarName]);
-                        }
+                    if ($sDefaultType == 'bool') {
+                        $mDefaultValue = $this->convertToBool($mDefaultValue);
                     }
-                    foreach ($aModuleConfig as $aConfigKey => $Value) {
-                        if (!isset($known[$aConfigKey])) {
-                            $this->output->writeLn(
-                                "$sVarName from module $sModuleId is ignored because it is not defined in metadata.php anymore"
-                            );
-                            unset($aModuleConfig[$aConfigKey]);
-                        }
+
+                    if (! isset($aModuleConfig[$sVarName])) {
+                        //TODO warning about not set module config value
+                        //this happens if the module was installed fresh and config was never saved in admin
+                        $mCurrentValue = $mDefaultValue;
+                    } else {
+                        $mCurrentValue = $aModuleConfig[$sVarName];
                     }
-                    if (count($aModuleConfig) == 0) {
-                        unset($aModuleConfigs[$sModuleId]);
+
+                    if ($sDefaultType == 'bool') {
+                        $mCurrentValue = $this->convertToBool($mCurrentValue);
+                    }
+
+                    if ($mCurrentValue === $mDefaultValue) {
+                        unset($aModuleConfig[$sVarName]);
                     }
                 }
+                foreach ($aModuleConfig as $aConfigKey => $Value) {
+                    if (!isset($known[$aConfigKey])) {
+                        $this->output->writeLn(
+                            "$sVarName from module $sModuleId is ignored because it is not defined in metadata.php anymore"
+                        );
+                        unset($aModuleConfig[$aConfigKey]);
+                    }
+                }
+                if (count($aModuleConfig) == 0) {
+                    unset($aModuleConfigs[$sModuleId]);
+                }
             }
+            
             $aDefaultGeneralConfig = $this->aDefaultConfig[$this->sNameForGeneralShopSettings];
             foreach ($aGeneralConfig as $sVarName => $mCurrentValue) {
                 $mDefaultValue = isset($aDefaultGeneralConfig[$sVarName]) ? $aDefaultGeneralConfig[$sVarName] : null;
