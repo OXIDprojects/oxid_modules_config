@@ -47,6 +47,7 @@ $aModule = [
     'extend'      => [],
     'controllers' => [
         'admin_oxpsmodulesconfigdashboard'  => OxidProfessionalServices\ModulesConfig\Controller\Admin\Dashboard::class,
+        'shop_main'  => OxidProfessionalServices\ModulesConfig\Controller\Admin\ShopMain::class,
     ],
     'templates'   => [
         'admin_oxpsmodulesconfigdashboard.tpl' => 'oxps/modulesconfig/views/admin/admin_oxpsmodulesconfigdashboard.tpl',
