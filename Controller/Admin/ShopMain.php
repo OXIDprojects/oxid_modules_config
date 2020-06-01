@@ -16,12 +16,10 @@
 
 namespace OxidProfessionalServices\ModulesConfig\Controller\Admin;
 
-use OxidEsales\Eshop\Application\Controller\Admin\ShopMain as ShopMainCore;
-
 /**
  * ShopMain.
  */
-class ShopMain extends ShopMainCore
+class ShopMain extends ShopMain_parent
 {
     /**
      * Check if Shop can be created.

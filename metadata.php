@@ -44,10 +44,11 @@ $aModule = [
     'author'      => 'OXID Professional Services',
     'url'         => 'http://www.oxid-esales.com',
     'email'       => 'info@oxid-esales.com',
-    'extend'      => [],
+    'extend'      => [
+        'shop_main'  => OxidProfessionalServices\ModulesConfig\Controller\Admin\ShopMain::class,
+    ],
     'controllers' => [
         'admin_oxpsmodulesconfigdashboard'  => OxidProfessionalServices\ModulesConfig\Controller\Admin\Dashboard::class,
-        'shop_main'  => OxidProfessionalServices\ModulesConfig\Controller\Admin\ShopMain::class,
     ],
     'templates'   => [
         'admin_oxpsmodulesconfigdashboard.tpl' => 'oxps/modulesconfig/views/admin/admin_oxpsmodulesconfigdashboard.tpl',
