@@ -469,7 +469,13 @@ class ConfigImport extends CommandBase
             }
 
             foreach ($aModuleOverride as $sName => $mValue) {
-                $aMergedModuleSettings[$sName] = array('value' => $mValue, 'type' => null);
+                $type = 'str';
+                if ($this->is_assoc_array($mValue)) {
+                    $type = 'aarr';
+                } elseif(is_array($mValue)) {
+                    $type = 'arr';
+                }
+                $aMergedModuleSettings[$sName] = array('value' => $mValue, 'type' => $type);
             }
 
             // Save all that is not part of $this->aConfiguration['excludeFields'])
