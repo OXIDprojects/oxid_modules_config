@@ -1,6 +1,15 @@
 # Changelog for Config Importer
 
-## 6.1.0 (only released as beta)
+## 6.1.0 
+
+### fixed 
+* The tests have been updated and are now compatible with OXID ESHOP 6.1. 
+
+### changed 
+* The tests have been refactored to use namespaces. 
+* Several tests have been refactored to not mock the SUT. 
+
+## 6.1.0 (beta release)
 
 ### new
 
