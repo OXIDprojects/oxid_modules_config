@@ -26,3 +26,13 @@ All relevant modules configuration is being used including: Versions, Extended c
 ## Install from VCS
 
 * Require `oxid-professional-services/oxid-modules-config`
+
+# Compatibility table
+
+
+| OXID Eshop Version| OXID Modules Config Version | 
+|-------------------|-----------------------------|
+|6.1                | 6.1                         |
+|6.2                | Not yet supported           | 
+
+
