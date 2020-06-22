@@ -118,6 +118,9 @@ class ConfigExport extends CommandBase
     protected function filternestedExcludes($values){
         $excludeDeep = $this->aConfiguration['excludeDeep'];
         $moduleValues = &$values['module'];
+        if (!is_array($moduleValues)) {
+            return $values;
+        }
         foreach ($moduleValues as $moduleId => &$moduleSettings) {
             foreach ($moduleSettings as $sVarName => &$aVarValue) {
                 if (is_array($aVarValue)) {
