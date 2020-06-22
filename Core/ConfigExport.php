@@ -283,7 +283,7 @@ class ConfigExport extends CommandBase
                     $aDefaultThemeConfig = isset($aDefaultThemeConfigs[$sTheme]) ? $aDefaultThemeConfigs[$sTheme] : null;
                     foreach ($aThemeConfig as $sVarName => $mCurrentValue) {
                         if (array_key_exists($sVarName,$aGeneralConfig)) {
-                            $this->output->writeln("config '$sVarName' is in theme and in gerneral namespace use --force-cleanup to repair");
+                            $this->output->writeln("config '$sVarName' is in theme and in general namespace use --force-cleanup to repair");
                             if ($this->input->getOption('force-cleanup') ) {
                                 $sSql = "DELETE FROM oxconfig WHERE oxmodule = '' AND oxvarname = ? AND oxshopid = ?";
                                 DatabaseProvider::getDb()->execute($sSql,[$sVarName,$sShopId]);
