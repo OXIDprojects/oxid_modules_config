@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of OXID Module Configuration Im-/Exporter module.
  *
@@ -60,12 +61,15 @@ class ConfigImport extends CommandBase
     protected $storedDisplayConfigHash = [];
 
 
-    public function init(){
+    public function init()
+    {
         parent::init();
         $db = DatabaseProvider::getDb();
-        $hashValues = $db->getCol("SELECT md5(CONCAT(oxcfgmodule,'#', oxcfgvarname,'#', oxgrouping,'#', oxvarconstraint,'#', oxpos)) FROM oxconfigdisplay");
+        $hashValues = $db->getCol(
+            "SELECT md5(CONCAT(oxcfgmodule,'#', oxcfgvarname,'#', oxgrouping,'#', oxvarconstraint,'#', oxpos))"
+            . " FROM oxconfigdisplay"
+        );
         $this->storedDisplayConfigHash = array_fill_keys($hashValues, true);
-
     }
 
     /*
@@ -113,13 +117,13 @@ class ConfigImport extends CommandBase
         $sFileName = $this->getConfigDir() . $sRelativeFileName;
         $aResult = $this->readConfigValues($sFileName);
 
-        $aResult = $this->merge_config($this->aDefaultConfig, $aResult);
+        $aResult = $this->mergeConfig($this->aDefaultConfig, $aResult);
 
         if ($this->sEnv) {
             $sEnvDirName = $this->getEnvironmentConfigDir();
             $sFileName = $sEnvDirName . $sRelativeFileName;
             $aEnvConfig = $this->readConfigValues($sFileName);
-            $aResult = $this->merge_config($aResult, $aEnvConfig);
+            $aResult = $this->mergeConfig($aResult, $aEnvConfig);
         }
 
         $this->output->writeLn("Importing config for shop $sShop");
@@ -148,7 +152,7 @@ class ConfigImport extends CommandBase
      *
      * @return
      */
-    protected function merge_config($aBase, $aOverride)
+    protected function mergeConfig($aBase, $aOverride)
     {
         foreach ($aOverride as $key => $mOverriderValue) {
             if (is_array($mOverriderValue)) {
@@ -169,7 +173,8 @@ class ConfigImport extends CommandBase
                         }
                     } else {
                         $this->output->writeLn(
-                            "ERROR: Ignoring corrupted common config value '$key':'$aBaseValue' for shop " . $this->sShopId
+                            "ERROR: Ignoring corrupted common config value '$key':'$aBaseValue' for shop "
+                            . $this->sShopId
                         );
                     }
                 }
@@ -211,9 +216,9 @@ class ConfigImport extends CommandBase
         $aOxShopSettings = $aConfigValues['oxshops'];
         if ($aOxShopSettings) {
             $db = \oxDb::getDb(\oxDb::FETCH_MODE_ASSOC);
-            $old = $db->select("select * from oxshops where oxid = ?",[$sShopId])->fetchAll();
+            $old = $db->select("select * from oxshops where oxid = ?", [$sShopId])->fetchAll();
             $old = $old ? $old[0] : [];
-            $diff = array_diff_assoc($aOxShopSettings,$old);
+            $diff = array_diff_assoc($aOxShopSettings, $old);
             if ($diff) {
                 $oShop->assign($aOxShopSettings);
                 //fake active shopid to allow derived update
@@ -248,7 +253,7 @@ class ConfigImport extends CommandBase
 
         $oConfig = ShopConfig::get($sShopId);
         $this->oConfig = $oConfig;
-        Registry::set('oxConfig',$oConfig);
+        Registry::set('oxConfig', $oConfig);
         //the oxutilsobject hold the shop id indirectly within the shopid calculator
         //and so will cause reading the wrong cache and so cause errors during the fix states
         $_POST['shp'] = $sShopId;
@@ -256,26 +261,29 @@ class ConfigImport extends CommandBase
         //doing so does not having any known effect.
         $shop = $oConfig->getActiveShop();
         $shop->setShopId($sShopId);
-        //set the global config onject in oxid 6.1 
+        $oConfig->setShopId($sShopId);
+        //set the global config object in oxid 6.1
         $shop->setConfig($oConfig);
         //we need a fresh instance here because
         //shopId calculator is private
         $freshUtilsObject = new \OxidEsales\Eshop\Core\UtilsObject();
         Registry::set(\OxidEsales\Eshop\Core\UtilsObject::class, $freshUtilsObject);
-        //clear oxnew cache that may hold objects like Shop class from the first run 
+        //clear oxnew cache that may hold objects like Shop class from the first run
         $freshUtilsObject->resetInstanceCache();
 
         $ouo = Registry::get(\OxidEsales\Eshop\Core\UtilsObject::class);
-        if($oConfig->getShopId() != $sShopId ||
+        if (
+            $oConfig->getShopId() != $sShopId ||
             $oConfig->getActiveShop()->getShopId() != $sShopId ||
-            $ouo->getShopId() != $sShopId) {
-            throw new \Exception("ShopId was not set correctly, this means shop internal have changed and import must be adapted");
+            $ouo->getShopId() != $sShopId
+        ) {
+            throw new \Exception(
+                "ShopId was not set correctly, this means shop internal have changed and import must be adapted"
+            );
         }
 
-
-
         $aDisabledModules = $oConfig->getConfigParam('aDisabledModules');
-        if ($aDisabledModules == null){
+        if ($aDisabledModules == null) {
             //if the oxconfig database was cleared (eg in case of error)
             //fall back to a empty array
             $aDisabledModules = [];
@@ -283,7 +291,7 @@ class ConfigImport extends CommandBase
         $disabledModulesBeforeImport = array_fill_keys($aDisabledModules, true);
         $modulesKnownBeforeImport = $oConfig->getConfigParam('aModuleVersions');
 
-        $aModuleVersions = $this->getConfigValue($aConfigValues,'aModuleVersions');
+        $aModuleVersions = $this->getConfigValue($aConfigValues, 'aModuleVersions');
 
         /** @var ModuleStateFixer $oModuleStateFixer */
         $oModuleStateFixer = \oxRegistry::get(ModuleStateFixer::class);
@@ -298,12 +306,13 @@ class ConfigImport extends CommandBase
             $oldVersion = $modulesKnownBeforeImport[$sModuleId];
             $versionToImport = $aModuleVersions[$sModuleId];
 
-            $gt = version_compare($versionToImport, $oldVersion,'>');
+            $gt = version_compare($versionToImport, $oldVersion, '>');
             if ($gt) {
                 $updatedModules[$sModuleId] = $sModuleId;
                 if (isset($oldVersion)) {
                     $this->output->writeLn(
-                        "[INFO] {$sModuleId} has a different version (db:$oldVersion vs import:$versionToImport) disabling it, so it can do updates"
+                        "[INFO] {$sModuleId} has a different version "
+                        . "(db:$oldVersion vs import:$versionToImport) disabling it, so it can do updates"
                     );
                 } else {
                     $this->output->writeLn(
@@ -349,11 +358,12 @@ class ConfigImport extends CommandBase
         foreach ($modulesKnownByPath as $sModuleId => $path) {
             if (!isset($aModuleVersions[$sModuleId])) {
                 if (!$oModule->load($sModuleId)) {
-                    unset ($aModulePathsClean[$sModuleId]);
+                    unset($aModulePathsClean[$sModuleId]);
                     $this->output->writeLn(
-                        "[WARN] {$sModuleId} it is not part of the import but, not installed physically, but somehow registered; removing it from modulePath array."
+                        "[WARN] {$sModuleId} it is not part of the import but, not installed physically, "
+                        . "but somehow registered; removing it from modulePath array."
                     );
-                    $oConfig->saveShopConfVar('aarr','aModulePaths',$aModulePathsClean);
+                    $oConfig->saveShopConfVar('aarr', 'aModulePaths', $aModulePathsClean);
                 }
                 $isDisabled = in_array($sModuleId, $aDisabledModules);
                 if (!$isDisabled) {
@@ -361,24 +371,29 @@ class ConfigImport extends CommandBase
                         $aDisabledModules[] = $sModuleId;
                     }
                     $this->output->writeLn(
-                        "[WARN] {$sModuleId} it is not part of the import but installed on this system, please create a new export"
+                        "[WARN] {$sModuleId} it is not part of the import but installed on this system,"
+                        . " please create a new export"
                     );
                 }
             }
         }
-        $this->saveShopVar('aDisabledModules', $aDisabledModules, '','arr');
+        $this->saveShopVar('aDisabledModules', $aDisabledModules, '', 'arr');
 
         foreach ($aModuleVersions as $sModuleId => $sVersion) {
             if (!$oModule->load($sModuleId)) {
                 $this->output->writeLn(
-                    "[ERROR] can not load {$sModuleId} given in importfile shop{$sShopId}.yaml in aModuleVersions please check if it is installed and working"
+                    "[ERROR] can not load {$sModuleId} given in importfile shop{$sShopId}.yaml in aModuleVersions "
+                    . "please check if it is installed and working"
                 );
                 continue;
             }
 
             //execute activate event
             if ($this->aConfiguration['executeModuleActivationEvents'] && $oModule->isActive()) {
-                $wasDeactivatedBeforeImport = isset($modulesKnownBeforeImport[$sModuleId]) && isset($disabledModulesBeforeImport[$sModuleId]);
+                $wasDeactivatedBeforeImport = isset(
+                    $modulesKnownBeforeImport[$sModuleId],
+                    $disabledModulesBeforeImport[$sModuleId]
+                );
                 $wasUnknownBeforeImport = !isset($modulesKnownBeforeImport[$sModuleId]);
                 if ($wasDeactivatedBeforeImport || $wasUnknownBeforeImport) {
                     $this->output->writeLn(
@@ -390,7 +405,6 @@ class ConfigImport extends CommandBase
                     } catch (\Exception $exception) {
                         print "[ERROR] $sModuleId was NOT activated again.";
                     }
-
                 }
             }
 
@@ -439,7 +453,7 @@ class ConfigImport extends CommandBase
 
         $exclude = $this->aConfiguration['excludeFields'];
         $excludeDeep = $this->aConfiguration['excludeDeep'];
-        $excludeFlat = array_flip(array_filter($exclude,'is_string'));
+        $excludeFlat = array_flip(array_filter($exclude, 'is_string'));
 
         /**
          * @var \oxModuleList $oxModuleList
@@ -453,7 +467,7 @@ class ConfigImport extends CommandBase
             if ($oModule->hasExtendClass()) {
                 $aAddModules = $oModule->getExtensions();
                 foreach ($aAddModules as $key => $ext) {
-                    if(!isset($aModuleExtensions[$key])) {
+                    if (!isset($aModuleExtensions[$key])) {
                         $aModuleExtensions[$key][] = $ext;
                     }
                 }
@@ -467,13 +481,19 @@ class ConfigImport extends CommandBase
             $aTmp = is_null($aDefaultModuleSettings) ? array() : $aDefaultModuleSettings;
             $aDefaultModuleSettings = array();
             foreach ($aTmp as $nr => $aSetting) {
-                if(!is_array($aSetting)) {
-                    throw new \Exception("Error in metadata.php settings of $sModuleId in setting nr/key '$nr'. Value '" . print_r($aSetting,true) ."' is not an array!");
+                if (!is_array($aSetting)) {
+                    throw new \Exception(
+                        "Error in metadata.php settings of $sModuleId in setting nr/key '$nr'. "
+                        . "Value '" . print_r($aSetting, true) . "' is not an array!"
+                    );
                 }
                 $aDefaultModuleSettings[$aSetting['name']] = $aSetting;
             }
             // array ($key => $value)
-            $aModuleOverride = isset($allModulesConfigFromYaml[$sModuleId]) && is_array($allModulesConfigFromYaml[$sModuleId]) ? $allModulesConfigFromYaml[$sModuleId] : array();
+            $aModuleOverride = isset($allModulesConfigFromYaml[$sModuleId])
+                && is_array($allModulesConfigFromYaml[$sModuleId])
+                    ? $allModulesConfigFromYaml[$sModuleId]
+                    : array();
 
             // merge from aModulesOverwrite into aDefaultModuleSettings
             $aMergedModuleSettings = array();
@@ -488,9 +508,9 @@ class ConfigImport extends CommandBase
 
             foreach ($aModuleOverride as $sName => $mValue) {
                 $type = 'str';
-                if ($this->is_assoc_array($mValue)) {
+                if ($this->isAssocArray($mValue)) {
                     $type = 'aarr';
-                } elseif(is_array($mValue)) {
+                } elseif (is_array($mValue)) {
                     $type = 'arr';
                 }
                 $aMergedModuleSettings[$sName] = array('value' => $mValue, 'type' => $type);
@@ -505,13 +525,13 @@ class ConfigImport extends CommandBase
                     continue;
                 }
                 if ($aVarValue["type"] == 'aarr') {
-                    if(isset($excludeDeep[$sVarName])) {
+                    if (isset($excludeDeep[$sVarName])) {
                         $innerExcludes = $excludeDeep[$sVarName];
-                        if (!is_array( $innerExcludes )) {
+                        if (!is_array($innerExcludes)) {
                             $innerExcludes = [$innerExcludes];
                         }
                         $value         = &$aVarValue['value'];
-                        $original      = $this->oConfig->getConfigParam( $sVarName );
+                        $original      = $this->oConfig->getConfigParam($sVarName);
                         if ($original) {
                             foreach ($innerExcludes as $exclude) {
                                 $value[$exclude] = $original[$exclude];
@@ -525,13 +545,12 @@ class ConfigImport extends CommandBase
 
                 $this->saveShopVar($sVarName, $aVarValue['value'], "module:$sModuleId", $aVarValue["type"]);
             }
-
         }
     }
 
     protected function getTypeAndValue($sVarName, $mVarValue)
     {
-        if ($this->is_assoc_array($mVarValue)) {
+        if ($this->isAssocArray($mVarValue)) {
             $iCount = count($mVarValue);
             if ($iCount == 0) {
                 $sVarType = 'arr';
@@ -543,7 +562,7 @@ class ConfigImport extends CommandBase
             }
         } elseif (is_array($mVarValue)) {
             $sVarType = 'arr';
-        } elseif(is_bool($mVarValue)) {
+        } elseif (is_bool($mVarValue)) {
             $sVarType = 'bool';
         } else {
             //deprecated check for 'bl'
@@ -563,13 +582,13 @@ class ConfigImport extends CommandBase
         $sQ = "select CONCAT(oxvarname,'+',oxmodule) as mapkey, oxvartype from oxconfig where oxshopid = ?";
         $allRows = $db->getAll($sQ, [$this->sShopId]);
         $map = [];
-        foreach($allRows as $row) {
+        foreach ($allRows as $row) {
             $map[$row['mapkey']] = $row['oxvartype'];
         }
         return $map;
     }
 
-    public function getShopConfType($sVarName,$sSectionModule)
+    public function getShopConfType($sVarName, $sSectionModule)
     {
 
         $cachekey = $sVarName . '+' . $sSectionModule;
@@ -577,7 +596,8 @@ class ConfigImport extends CommandBase
     }
 
 
-    protected function saveShopVarWithTypeInfo($sVarName, $mVarValue, $sSectionModule){
+    protected function saveShopVarWithTypeInfo($sVarName, $mVarValue, $sSectionModule)
+    {
         list($sVarType, $mVarValue) = $this->getTypeAndValue($sVarName, $mVarValue);
         $this->saveShopVar($sVarName, $mVarValue, $sSectionModule, $sVarType);
     }
@@ -589,8 +609,8 @@ class ConfigImport extends CommandBase
         $oConfig = $this->oConfig;
 
         if ($sShopId != 1) {
-            $aOnlyMainShopVars = array_fill_keys(['blMallUsers', 'aSerials', 'IMD', 'IMA', 'IMS'],true);
-            if ($aOnlyMainShopVars[$sVarName]){
+            $aOnlyMainShopVars = array_fill_keys(['blMallUsers', 'aSerials', 'IMD', 'IMA', 'IMS'], true);
+            if ($aOnlyMainShopVars[$sVarName]) {
                 return;
             }
         }
@@ -603,21 +623,24 @@ class ConfigImport extends CommandBase
             $sSectionModule
         );
 
-        if(strpos($sSectionModule,'module') === 0) {
-            if($existsAlsoInGlobalNameSpace = $this->getShopConfType($sVarName,'')) {
+        if (strpos($sSectionModule, 'module') === 0) {
+            if ($existsAlsoInGlobalNameSpace = $this->getShopConfType($sVarName, '')) {
                 $db = \oxDb::getDb();
-                $db->execute("DELETE FROM oxconfig WHERE oxshopid = ? AND oxvarname = ? AND oxmodule = ''",[$this->sShopId,$sVarName]);
-                $this->output->writeLn("the config value $sVarName from module $sSectionModule was delete from global namespace");
+                $db->execute(
+                    "DELETE FROM oxconfig WHERE oxshopid = ? AND oxvarname = ? AND oxmodule = ''",
+                    [$this->sShopId,$sVarName]
+                );
+                $this->output->writeLn(
+                    "the config value $sVarName from module $sSectionModule was delete from global namespace"
+                );
             }
         }
     }
 
-    protected function is_assoc_array($arr)
+    protected function isAssocArray($arr)
     {
         return is_array($arr) && (array_keys($arr) !== range(0, count($arr) - 1));
     }
-
-
 
     /**
      * @param $aSectionData
@@ -638,11 +661,10 @@ class ConfigImport extends CommandBase
             }
             $sSectionModule = "theme:$sThemeId";
             foreach ($aSettings as $sVarName => $mVarValue) {
-                if(isset($mVarValue['value'])) {
+                if (isset($mVarValue['value'])) {
                     $this->saveShopVarWithTypeInfo($sVarName, $mVarValue['value'], $sSectionModule);
                     $this->saveThemeDisplayVars($sVarName, $mVarValue, $sSectionModule);
-                }
-                else {
+                } else {
                     $this->saveShopVarWithTypeInfo($sVarName, $mVarValue, $sSectionModule);
                 }
             }
@@ -704,7 +726,8 @@ class ConfigImport extends CommandBase
 
         $sNewOXIDdQuoted = $oDb->quote(\oxUtilsObject::getInstance()->generateUID());
 
-        if (isset($this->storedDisplayConfigHash[md5($sModule . '#' . $sVarName . '#' .  $grouping. '#'. $constraints .'#'. $pos)])){
+        $hash = md5($sModule . '#' . $sVarName . '#' .  $grouping . '#' . $constraints . '#' . $pos);
+        if (isset($this->storedDisplayConfigHash[$hash])) {
             return;
         }
 
@@ -712,10 +735,8 @@ class ConfigImport extends CommandBase
         $oDb->execute($sQ);
 
         $sQ = "insert into oxconfigdisplay (oxid, oxcfgmodule, oxcfgvarname, oxgrouping, oxvarconstraint, oxpos )
-               values($sNewOXIDdQuoted, $sModuleQuoted, $sVarNameQuoted, $sVarGroupingQuoted, $sVarConstraintsQuoted, $sVarPosQuoted)";
+               values($sNewOXIDdQuoted, $sModuleQuoted, $sVarNameQuoted, $sVarGroupingQuoted, $sVarConstraintsQuoted,
+               $sVarPosQuoted)";
         $oDb->execute($sQ);
-
-
     }
-
 }
