@@ -550,15 +550,23 @@ class ConfigImport extends CommandBase
 
     protected function getTypeAndValue($sVarName, $mVarValue)
     {
+        $specialTypes = ['str', 'bool', 'arr', 'aarr', 'select', 'string', 'int', 'num'];
         if ($this->isAssocArray($mVarValue)) {
-            $iCount = count($mVarValue);
-            if ($iCount == 0) {
-                $sVarType = 'arr';
-            } elseif ($iCount > 1) {
-                $sVarType = 'aarr';
-            } else {
-                $sVarType = key($mVarValue);
-                $mVarValue = $mVarValue[$sVarType];
+            /*
+             * We need to cover multiple sort of values here, the easiest one is just an assoc-array
+             * which will be saved as a 'aarr'.
+             * But we also need to cover some special config types like these:
+             *    blPsBasketReservationEnabled:
+             *      str: '0'
+             *    blPsLoginEnabled:
+             *      str: '0'
+             * This looks like an assoc-array, but in reality it is just a boolean flag
+             * which must be saved with the type 'str' (WAT?)
+             */
+            $sVarType = 'aarr';
+            if (count($mVarValue) === 1 && in_array(array_keys($mVarValue)[0], $specialTypes, true)) {
+                $sVarType = array_keys($mVarValue)[0];
+                $mVarValue = array_values($mVarValue)[0];
             }
         } elseif (is_array($mVarValue)) {
             $sVarType = 'arr';
