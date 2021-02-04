@@ -1,5 +1,10 @@
 # Changelog for Config Importer
 
+## not released
+
+### fixed 
+* fixed that if the selected theme is the default in the defaults.yaml then all theme settings for this theme got lost
+
 ## 6.1.0 
 
 ### fixed 
