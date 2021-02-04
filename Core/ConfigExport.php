@@ -262,13 +262,6 @@ class ConfigExport extends CommandBase
                     }
                 }
             }
-            $aDefaultGeneralConfig = $this->aDefaultConfig[$this->sNameForGeneralShopSettings];
-            foreach ($aGeneralConfig as $sVarName => $mCurrentValue) {
-                $mDefaultValue = isset($aDefaultGeneralConfig[$sVarName]) ? $aDefaultGeneralConfig[$sVarName] : null;
-                if ($mCurrentValue === $mDefaultValue) {
-                    unset($aGeneralConfig[$sVarName]);
-                }
-            }
 
             if (array_key_exists('theme', $aShopConfig)) {
                 $aCurrentThemeConfigs = &$aShopConfig['theme'];
@@ -303,6 +296,13 @@ class ConfigExport extends CommandBase
                             }
                         }
                     }
+                }
+            }
+            $aDefaultGeneralConfig = $this->aDefaultConfig[$this->sNameForGeneralShopSettings];
+            foreach ($aGeneralConfig as $sVarName => $mCurrentValue) {
+                $mDefaultValue = isset($aDefaultGeneralConfig[$sVarName]) ? $aDefaultGeneralConfig[$sVarName] : null;
+                if ($mCurrentValue === $mDefaultValue) {
+                    unset($aGeneralConfig[$sVarName]);
                 }
             }
         }
