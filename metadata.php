@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of OXID Module Configuration Im-/Exporter module.
  *
@@ -24,6 +25,9 @@
  * @copyright (C] OXID eSales AG 2003-2014
  */
 
+use OxidProfessionalServices\ModulesConfig\Controller\Admin\ShopMain;
+use OxidProfessionalServices\ModulesConfig\Controller\Admin\Dashboard;
+
 /**
  * Metadata version
  */
@@ -45,10 +49,10 @@ $aModule = [
     'url'         => 'http://www.oxid-esales.com',
     'email'       => 'info@oxid-esales.com',
     'extend'      => [
-        'shop_main'  => OxidProfessionalServices\ModulesConfig\Controller\Admin\ShopMain::class,
+        \OxidEsales\Eshop\Application\Controller\Admin\ShopMain::class  => ShopMain::class,
     ],
     'controllers' => [
-        'admin_oxpsmodulesconfigdashboard'  => OxidProfessionalServices\ModulesConfig\Controller\Admin\Dashboard::class,
+        'admin_oxpsmodulesconfigdashboard'  => Dashboard::class,
     ],
     'templates'   => [
         'admin_oxpsmodulesconfigdashboard.tpl' => 'oxps/modulesconfig/views/admin/admin_oxpsmodulesconfigdashboard.tpl',
