@@ -29,9 +29,9 @@ class ShopMain extends ShopMain_parent
      *
      * @return bool
      */
-    public function canCreateShop($shopId, $shop)
+    public function checkCreateShop($shopId, $shop)
     {
-        return parent::canCreateShop($shopId, $shop);
+        return $this->canCreateShop($shopId, $shop);
     }
 
     /**
@@ -41,8 +41,8 @@ class ShopMain extends ShopMain_parent
      * @param \OxidEsales\Eshop\Application\Model\Shop $shop
      * @param string                                   $shopId
      */
-    public function updateShopInformation($config, $shop, $shopId)
+    public function updateShopInfo($config, $shop, $shopId)
     {
-        parent::updateShopInformation($config, $shop, $shopId);
+        $this->updateShopInformation($config, $shop, $shopId);
     }
 }

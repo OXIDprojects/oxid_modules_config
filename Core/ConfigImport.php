@@ -285,11 +285,11 @@ class ConfigImport extends CommandBase
                 $oShop->assign($parameters);
                 $oShop->setLanguage($shopLanguageId);
 
-                $canCreateShop = $shopMain->canCreateShop($sShopId, $oShop, $config);
+                $canCreateShop = $shopMain->checkCreateShop($sShopId, $oShop);
                 if ($canCreateShop) {
                     try {
                         $oShop->save();
-                        $shopMain->updateShopInformation($config, $oShop, $sShopId);
+                        $shopMain->updateShopInfo($config, $oShop, $sShopId);
                         Registry::getSession()->setVariable("actshop", $sShopId);
                     } catch (\Exception $exception) {
                         $this->logger->error(
