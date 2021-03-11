@@ -32,7 +32,7 @@ use OxidProfessionalServices\OxidConsole\Core\ShopConfig;
 use OxidEsales\Eshop\Application\Controller\Admin\ShopLicense;
 use OxidEsales\Eshop\Core\Registry;
 use Symfony\Component\Console\Logger\ConsoleLogger;
-use OxidProfessionalServices\ModulesConfig\Controller\Admin\ShopMain;
+use OxidEsales\Eshop\Application\Controller\Admin\ShopMain;
 use OxidEsales\Facts\Facts;
 use OxidEsales\Eshop\Application\Model\Shop;
 
