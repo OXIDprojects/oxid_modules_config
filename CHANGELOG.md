@@ -1,6 +1,20 @@
 # Changelog for Config Importer
 
-## 6.1.0 (only released as beta)
+## not released
+
+### fixed 
+* fixed that if the selected theme is the default in the defaults.yaml then all theme settings for this theme got lost
+
+## 6.1.0 
+
+### fixed 
+* The tests have been updated and are now compatible with OXID ESHOP 6.1. 
+
+### changed 
+* The tests have been refactored to use namespaces. 
+* Several tests have been refactored to not mock the SUT. 
+
+## 6.1.0 (beta release)
 
 ### new
 

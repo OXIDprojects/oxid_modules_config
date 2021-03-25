@@ -118,6 +118,9 @@ class ConfigExport extends CommandBase
     protected function filternestedExcludes($values){
         $excludeDeep = $this->aConfiguration['excludeDeep'];
         $moduleValues = &$values['module'];
+        if (!is_array($moduleValues)) {
+            return $values;
+        }
         foreach ($moduleValues as $moduleId => &$moduleSettings) {
             foreach ($moduleSettings as $sVarName => &$aVarValue) {
                 if (is_array($aVarValue)) {
@@ -249,7 +252,7 @@ class ConfigExport extends CommandBase
                     foreach ($aModuleConfig as $aConfigKey => $Value) {
                         if (!isset($known[$aConfigKey])) {
                             $this->output->writeLn(
-                                "$sVarName from module $sModuleId is ignored because it is not defined in metadata.php anymore"
+                                "$aConfigKey from module $sModuleId is ignored because it is not defined in metadata.php anymore"
                             );
                             unset($aModuleConfig[$aConfigKey]);
                         }
@@ -257,13 +260,6 @@ class ConfigExport extends CommandBase
                     if (count($aModuleConfig) == 0) {
                         unset($aModuleConfigs[$sModuleId]);
                     }
-                }
-            }
-            $aDefaultGeneralConfig = $this->aDefaultConfig[$this->sNameForGeneralShopSettings];
-            foreach ($aGeneralConfig as $sVarName => $mCurrentValue) {
-                $mDefaultValue = isset($aDefaultGeneralConfig[$sVarName]) ? $aDefaultGeneralConfig[$sVarName] : null;
-                if ($mCurrentValue === $mDefaultValue) {
-                    unset($aGeneralConfig[$sVarName]);
                 }
             }
 
@@ -283,7 +279,7 @@ class ConfigExport extends CommandBase
                     $aDefaultThemeConfig = isset($aDefaultThemeConfigs[$sTheme]) ? $aDefaultThemeConfigs[$sTheme] : null;
                     foreach ($aThemeConfig as $sVarName => $mCurrentValue) {
                         if (array_key_exists($sVarName,$aGeneralConfig)) {
-                            $this->output->writeln("config '$sVarName' is in theme and in gerneral namespace use --force-cleanup to repair");
+                            $this->output->writeln("config '$sVarName' is in theme and in general namespace use --force-cleanup to repair");
                             if ($this->input->getOption('force-cleanup') ) {
                                 $sSql = "DELETE FROM oxconfig WHERE oxmodule = '' AND oxvarname = ? AND oxshopid = ?";
                                 DatabaseProvider::getDb()->execute($sSql,[$sVarName,$sShopId]);
@@ -300,6 +296,13 @@ class ConfigExport extends CommandBase
                             }
                         }
                     }
+                }
+            }
+            $aDefaultGeneralConfig = $this->aDefaultConfig[$this->sNameForGeneralShopSettings];
+            foreach ($aGeneralConfig as $sVarName => $mCurrentValue) {
+                $mDefaultValue = isset($aDefaultGeneralConfig[$sVarName]) ? $aDefaultGeneralConfig[$sVarName] : null;
+                if ($mCurrentValue === $mDefaultValue) {
+                    unset($aGeneralConfig[$sVarName]);
                 }
             }
         }
