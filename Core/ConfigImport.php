@@ -32,6 +32,10 @@ use OxidCommunity\ModuleInternals\Core\ModuleStateFixer;
 use OxidProfessionalServices\OxidConsole\Core\ShopConfig;
 use OxidEsales\Eshop\Application\Controller\Admin\ShopLicense;
 use OxidEsales\Eshop\Core\Registry;
+use Symfony\Component\Console\Logger\ConsoleLogger;
+use OxidEsales\Eshop\Application\Controller\Admin\ShopMain;
+use OxidEsales\Facts\Facts;
+use OxidEsales\Eshop\Application\Model\Shop;
 
 /**
  * Class ConfigImport
@@ -49,6 +53,9 @@ class ConfigImport extends CommandBase
      * @var int The shop id to load the config for.
      */
     protected $sShopId;
+
+    /** @var ConsoleLogger $logger */
+    protected $logger;
 
     /**
      * @var array "name+module" => type
@@ -70,6 +77,7 @@ class ConfigImport extends CommandBase
             . " FROM oxconfigdisplay"
         );
         $this->storedDisplayConfigHash = array_fill_keys($hashValues, true);
+        $this->logger = new ConsoleLogger($this->output);
     }
 
     /*
@@ -198,11 +206,13 @@ class ConfigImport extends CommandBase
         /**
          * @var \oxShop $oShop
          */
-        $oShop = oxNew("oxshop");
+        $oShop = oxNew(Shop::class);
         $sShopId = $this->sShopId;
         if (!$oShop->load($sShopId)) {
             $this->output->writeLn("[WARN] Creating new shop $sShopId");
+            $this->createNewShop($aConfigValues, $sShopId, $oShop);
             $oShop->setId($sShopId);
+            $oShop->init();
             $oConfig = ShopConfig::get(1);
             $oConfig->saveShopConfVar(
                 'arr',
@@ -212,6 +222,7 @@ class ConfigImport extends CommandBase
                 ""
             );
         }
+
         $oShop->setShopId($sShopId);
         $aOxShopSettings = $aConfigValues['oxshops'];
         if ($aOxShopSettings) {
@@ -236,6 +247,64 @@ class ConfigImport extends CommandBase
                     }
                     $oShop->assign($aOxShopSettings);
                     $oShop->save();
+                }
+            }
+        }
+    }
+
+    /**
+     * Create new sub-shop through config file
+     *
+     * @param array     $aConfigValues  ConfigValues array
+     * @param string    $sShopId        Shop Id
+     * @param object    $oShop          OxidEsales\Eshop\Application\Model\Shop object
+     */
+    protected function createNewShop($aConfigValues, $sShopId, $oShop)
+    {
+        $parentShopId = isset($aConfigValues['oxshops']['OXPARENTID']) ?? '';
+
+        $shopMain = oxNew(ShopMain::class);
+        $facts = new Facts();
+        if ($parentShopId && !$facts->isEnterprise()) {
+            $this->logger->error('Shop has to be an EE to add a subshop.');
+        } else {
+            //Set new shop parameters
+            if (is_array($aConfigValues['oxshops']) && count($aConfigValues['oxshops']) > 0) {
+                $parameters = array(
+                    'oxshops__oxid' => $sShopId
+                );
+                $subjLang = null;
+                foreach ($aConfigValues['oxshops'] as $configKey => $configValue) {
+                    $configKey = strtolower($configKey);
+                    $parameters['oxshops__' . $configKey] = trim($configValue);
+
+                    //set default language
+                    if ($configKey == 'oxdeflanguage') {
+                        $subjLang = trim($configValue);
+                    }
+                }
+
+                $shopLanguageId = ($subjLang && $subjLang > 0) ? $subjLang : 0;
+                $config = Registry::getConfig();
+                $oShop->loadInLang($shopLanguageId, $sShopId);
+                $oShop->setLanguage(0);
+                $oShop->assign($parameters);
+                $oShop->setLanguage($shopLanguageId);
+
+                $canCreateShop = $shopMain->checkCreateShop($sShopId, $oShop);
+                if ($canCreateShop) {
+                    try {
+                        $oShop->save();
+                        $shopMain->updateShopInfo($config, $oShop, $sShopId);
+                        Registry::getSession()->setVariable("actshop", $sShopId);
+                    } catch (\Exception $exception) {
+                        $this->logger->error(
+                            "There is error encountered while creating shop $sShopId." .
+                            $exception->getMessage()
+                        );
+                    }
+                } else {
+                    $this->logger->error("Shop $sShopId can not create.");
                 }
             }
         }
@@ -332,7 +401,9 @@ class ConfigImport extends CommandBase
                     //);
                 }
                 $disabledModulesBeforeImport[$sModuleId] = 'disabledByUpdate';
-                $oModuleStateFixer->deactivate($oModule);
+                if ($oModule->isActive()) {
+                    $oModuleStateFixer->deactivate($oModule);
+                }
             }
         }
 
