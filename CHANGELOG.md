@@ -1,9 +1,16 @@
 # Changelog for Config Importer
 
-## not released
+## 6.2.0
+
+###Changed
+* Checking whether module is already active before deactivating the module.
+* $oModuleStateFixer->deactivate($oModule)
+* Creating sub-shops through defined configuration files.
 
 ### fixed 
 * fixed that if the selected theme is the default in the defaults.yaml then all theme settings for this theme got lost
+* Config import is not enabling a module if it's deactivated in DB.
+* Config import is not creating sub-shops through configuration files.
 
 ## 6.1.0 
 
