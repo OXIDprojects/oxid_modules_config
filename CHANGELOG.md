@@ -1,8 +1,14 @@
 # Changelog for Config Importer
 
+## 6.2.1
+
+### Changed
+* Import and export shop configurations in all languages supported by a shop.
+* Sort keys of shop configurations in export files.
+
 ## 6.2.0
 
-###Changed
+### Changed
 * Checking whether module is already active before deactivating the module.
 * $oModuleStateFixer->deactivate($oModule)
 * Creating sub-shops through defined configuration files.

@@ -234,15 +234,25 @@ class ConfigImport extends CommandBase
                 $oShop->assign($aOxShopSettings);
                 //fake active shopid to allow derived update
                 $oShop->getConfig()->setShopId($sShopId);
+                // Enforce derived updates
+                $oShop->setIsDerived(false);
                 $oShop->save();
-                for ($i = 1; $i <= 3; $i++) {
-                    $oShop->setLanguage($i);
+                $aLanguageParams = isset($aConfigValues['GeneralShopSettings']['aLanguageParams']) ?
+                    $aConfigValues['GeneralShopSettings']['aLanguageParams'] : array();
+                foreach ($aLanguageParams as $aLanguageParam) {
+                    $langId = isset($aLanguageParam['baseId']) ? $aLanguageParam['baseId'] : 0;
+                    if ($langId == 0) {
+                        continue;
+                    }
+                    $oShop->setLanguage($langId);
                     foreach ($aOxShopSettings as $sVarName => $mVarValue) {
-                        $iPosLastChar = strlen($sVarName) - 1;
-                        $iPosUnderscore = $iPosLastChar - 1;
-                        if ($sVarName[$iPosUnderscore] == '_' && $sVarName[$iPosLastChar] == $i) {
-                            $sFiledName = substr($sVarName, 0, strlen($sVarName) - 2);
-                            $aOxShopSettings[$sFiledName] = $mVarValue;
+                        $iPosUnderscore = strrpos($sVarName, '_');
+                        if ($iPosUnderscore !== false) {
+                            $sStringAfterUnderscore = substr($sVarName, $iPosUnderscore + 1);
+                            if (is_numeric($sStringAfterUnderscore) && $sStringAfterUnderscore == $langId) {
+                                $sFiledName = substr($sVarName, 0, $iPosUnderscore); // String before last underscore
+                                $aOxShopSettings[$sFiledName] = $mVarValue;
+                            }
                         }
                     }
                     $oShop->assign($aOxShopSettings);
