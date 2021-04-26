@@ -5,6 +5,7 @@
 ### Changed
 * Import and export shop configurations in all languages supported by a shop.
 * Sort keys of shop configurations in export files.
+* Fixed 'shop' option validation
 
 ## 6.2.0
 
