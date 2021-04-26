@@ -147,11 +147,33 @@ class ConfigExport extends CommandBase
      */
     protected function addShopConfig(& $aGroupedValues, $aConfigFields, $blInclude_mode)
     {
-        $aShops = \oxDb::getDb(\oxDb::FETCH_MODE_ASSOC)->getAll('SELECT * FROM `oxshops` ORDER BY oxid ASC');
+        $oDb             = \oxDb::getDb(\oxDb::FETCH_MODE_ASSOC);
+        $aShops          = $oDb->getAll('SELECT * FROM `oxshops` ORDER BY oxid ASC');
+        $aShopsSetTables = $oDb->getCol('SHOW TABLES LIKE "oxshops_set%"');
+        // Get data from all oxshops_set tables
+        $aShopSets = array();
+        foreach ($aShopsSetTables as $shopsSetTable) {
+            $shopsSetTable      = $oDb->quoteIdentifier($shopsSetTable);
+            $aShopsSetTableData = $oDb->getAll("SELECT * FROM $shopsSetTable ORDER BY oxid ASC");
+            foreach ($aShopsSetTableData as $shopsSetRow) {
+                $sOxid = $shopsSetRow['OXID'];
+                unset($shopsSetRow['OXID']);
+                if (array_key_exists($sOxid, $aShopSets)) {
+                    $aShopSets[$sOxid] = array_merge($aShopSets[$sOxid], $shopsSetRow);
+                } else {
+                    $aShopSets[$sOxid] = $shopsSetRow;
+                }
+            }
+        }
         foreach ($aShops as $aShop) {
             $id = $aShop['OXID'];
-            unset ($aShop['OXID']);
-            unset ($aShop['OXTIMESTAMP']);
+            unset($aShop['OXID']);
+            unset($aShop['OXTIMESTAMP']);
+            // Merge oxshops_set tables data with oxshops
+            if (array_key_exists($id, $aShopSets)) {
+                $aShop = array_merge($aShop, $aShopSets[$id]);
+            }
+            uksort($aShop, 'strnatcasecmp');
             foreach ($aShop as $sVarName => $sVarValue) {
                 $blFieldConfigured = in_array($sVarName, $aConfigFields);
                 $blIncludeField    = $blInclude_mode && $blFieldConfigured;

@@ -89,7 +89,7 @@ abstract class CommandBase
             exit;
         }
         $this->sEnv = $this->input->getOption('env');
-        if ($this->input->getOption('shop')) {
+        if ($this->input->hasOption('shop') && $this->input->getOption('shop')) {
             $this->shops = array_map('intval', explode(',', $this->input->getOption('shop')));
             $this->allShops = false;
         }
