@@ -1,6 +1,6 @@
 # Changelog for Config Importer
 
-## 7.0.1
+## 7.0.1 & 7.0.2
 
 ### Changed
 
