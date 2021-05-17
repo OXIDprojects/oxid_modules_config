@@ -1,5 +1,11 @@
 # Changelog for Config Importer
 
+## 7.0.1
+
+### Changed
+
+* config import silently ignores error if extension for creating new shops is not ready. This allows easy upgrade of this module
+
 ## 7.0
 
 ### Changed
