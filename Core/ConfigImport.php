@@ -300,7 +300,8 @@ class ConfigImport extends CommandBase
                 $oShop->setLanguage(0);
                 $oShop->assign($parameters);
                 $oShop->setLanguage($shopLanguageId);
-
+                $canCreateShop = method_exists($shopMain, 'checkCreateShop')
+                    && $shopMain->checkCreateShop($sShopId, $oShop);
                 $canCreateShop = $shopMain->checkCreateShop($sShopId, $oShop);
                 if ($canCreateShop) {
                     try {
