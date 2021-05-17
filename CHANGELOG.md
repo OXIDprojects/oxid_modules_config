@@ -1,6 +1,6 @@
 # Changelog for Config Importer
 
-## 6.2.1
+## 7.0
 
 ### Changed
 * Import and export shop configurations in all languages supported by a shop.
